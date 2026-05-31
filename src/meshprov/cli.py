@@ -16,9 +16,35 @@ from . import commands
 from .device import DeviceError
 from .keys import KeyError_, load_defaults, resolve_key
 
-# fam-keys.env lives at the project root (two levels up from this file:
-# src/meshprov/cli.py -> project root).
-ENV_PATH = Path(__file__).resolve().parents[2] / "fam-keys.env"
+ENV_FILENAME = "fam-keys.env"
+
+
+def _candidate_env_paths() -> list[Path]:
+    """Where to look for fam-keys.env, in priority order.
+
+    Works both when run from source (project root) and as a frozen PyInstaller
+    binary (next to the executable). The current working directory is checked
+    first so a user can keep keys alongside wherever they run the tool.
+    """
+    candidates = [Path.cwd() / ENV_FILENAME]
+    if getattr(sys, "frozen", False):
+        # Frozen binary: look beside the executable.
+        candidates.append(Path(sys.executable).resolve().parent / ENV_FILENAME)
+    else:
+        # Running from source: project root is two levels up from this file
+        # (src/meshprov/cli.py -> project root).
+        candidates.append(Path(__file__).resolve().parents[2] / ENV_FILENAME)
+    return candidates
+
+
+def _find_env_path() -> Path:
+    """Return the first existing candidate, or the first candidate (for the
+    'not found' error message) if none exist."""
+    candidates = _candidate_env_paths()
+    for path in candidates:
+        if path.exists():
+            return path
+    return candidates[0]
 
 
 def _derive_short(long_name: str) -> str:
@@ -71,7 +97,7 @@ def main(argv: list[str] | None = None) -> int:
             return commands.cmd_verify(args.port)
         if args.command == "fam":
             short = args.short or _derive_short(args.name)
-            env_defaults = load_defaults(ENV_PATH)
+            env_defaults = load_defaults(_find_env_path())
             fam_psk, fam_src = resolve_key(args.fam_key, env_defaults,
                                            "FAM_PSK_DEFAULT", "fam-key")
             ops_psk, ops_src = resolve_key(args.ops_key, env_defaults,

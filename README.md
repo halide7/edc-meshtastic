@@ -2,8 +2,8 @@
 
 Provision Meshtastic nodes over USB serial — EDC routers and "fam" client nodes.
 
-This is the Python port of the original shell scripts (`setup-router.sh`,
-`verify-router.sh`, `setup-fam-node.sh`, still present for reference). It talks
+This is the Python port of the original shell scripts (now under `sh/` —
+`setup-router.sh`, `verify-router.sh`, `setup-fam-node.sh` — kept for reference). It talks
 to the device through the official `meshtastic` Python library's structured
 config API rather than scraping CLI text, so it is more reliable across firmware
 versions and works the same on macOS and Windows.
@@ -185,8 +185,39 @@ Remember: even when installed globally, keys are still read from
 Every other node in the mesh must match region/preset/slot (US / SHORT_TURBO /
 30) to interoperate.
 
-## Distribution
+## Distribution — standalone binary
 
-`uv run` works anywhere uv + Python are installed. For a single-file binary that
-non-technical users can run without installing Python, freeze with PyInstaller
-(future work): `uvx pyinstaller --onefile ...`.
+For users who should not have to install Python or uv, build a single-file
+executable with PyInstaller (already configured as a dev dependency):
+
+```bash
+cd packaging
+uv run pyinstaller meshprov.spec --noconfirm --distpath ../dist --workpath ../build
+```
+
+This produces `dist/meshprov` (~13 MB on macOS arm64) — a self-contained binary
+that runs with no Python, no venv, and from any directory:
+
+```bash
+./dist/meshprov --help
+./dist/meshprov verify
+./dist/meshprov fam --name "Node One"
+```
+
+### Keys for the binary
+
+The frozen binary looks for `fam-keys.env` in this order:
+
+1. The current working directory.
+2. The directory containing the `meshprov` executable.
+
+So when you distribute the binary, ship a `fam-keys.env` **next to it** (or have
+users keep one in their working directory). As always, `--fam-key` / `--ops-key`
+override the file. **Never bundle real keys into the binary or commit them.**
+
+### Per-platform builds
+
+PyInstaller is not a cross-compiler: build on each target OS. Run the same
+command on a Mac to get the macOS binary and on Windows (PowerShell) to get
+`dist\meshprov.exe`. A CI matrix (GitHub Actions macOS + Windows runners) is the
+clean way to produce both from one push.
