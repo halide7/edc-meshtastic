@@ -1,6 +1,6 @@
 [project]
 name = "meshprov"
-version = "0.1.0"
+version = "0.1.1"
 description = "Provision Meshtastic nodes (EDC routers and fam client nodes) over USB serial."
 readme = "README.md"
 requires-python = ">=3.11"
