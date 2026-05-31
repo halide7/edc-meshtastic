@@ -1,0 +1,92 @@
+name: Release
+
+# Triggered by pushing a SemVer tag, e.g. v0.1.0 (see RELEASING in README).
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write   # needed to create the GitHub Release
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            asset: meshprov-macos-arm64
+            bin: dist/meshprov
+          - os: windows-latest
+            asset: meshprov-windows-x64.exe
+            bin: dist/meshprov.exe
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Install dependencies
+        run: uv sync --all-extras --dev
+
+      - name: Verify tag matches pyproject version
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PROJ=$(uv run python -c "import importlib.metadata as m; print(m.version('meshprov'))")
+          echo "tag=$TAG  pyproject=$PROJ"
+          if [ "$TAG" != "$PROJ" ]; then
+            echo "::error::Tag v$TAG does not match pyproject version $PROJ"
+            exit 1
+          fi
+
+      - name: Run tests
+        run: uv run pytest
+
+      - name: Build standalone binary
+        working-directory: packaging
+        run: uv run pyinstaller meshprov.spec --noconfirm --distpath ../dist --workpath ../build
+
+      - name: Smoke-test the binary
+        shell: bash
+        run: |
+          "${{ matrix.bin }}" --help
+
+      - name: Rename binary for release
+        shell: bash
+        run: |
+          mkdir -p out
+          cp "${{ matrix.bin }}" "out/${{ matrix.asset }}"
+
+      - name: Upload artifact for release job
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset }}
+          path: out/${{ matrix.asset }}
+          if-no-files-found: error
+
+  release:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all built binaries
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create / update the release with binaries
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          generate_release_notes: true
+          files: artifacts/**/*

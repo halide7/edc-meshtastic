@@ -219,5 +219,35 @@ override the file. **Never bundle real keys into the binary or commit them.**
 
 PyInstaller is not a cross-compiler: build on each target OS. Run the same
 command on a Mac to get the macOS binary and on Windows (PowerShell) to get
-`dist\meshprov.exe`. A CI matrix (GitHub Actions macOS + Windows runners) is the
-clean way to produce both from one push.
+`dist\meshprov.exe`. The GitHub Actions workflows below produce both from one
+push.
+
+## Continuous integration & releases
+
+Two workflows live in `.github/workflows/`:
+
+- **`ci.yml`** — on every push/PR to `main`: runs the test suite on Linux,
+  macOS, and Windows, then builds + smoke-tests the binary on macOS and Windows
+  and uploads each as a downloadable workflow artifact.
+- **`release.yml`** — on any `v*` tag: re-runs tests, verifies the tag matches
+  the `pyproject.toml` version, builds the macOS and Windows binaries, and
+  publishes them to a **GitHub Release** that anyone can download.
+
+### Cutting a release (SemVer)
+
+Versions follow [SemVer](https://semver.org/) (`vMAJOR.MINOR.PATCH`). To release:
+
+1. Bump `version` in `pyproject.toml` (e.g. `0.1.0` → `0.2.0`) and commit.
+2. Tag and push:
+
+   ```bash
+   git tag -a v0.1.0 -m "meshprov v0.1.0"
+   git push origin v0.1.0
+   ```
+
+3. The release workflow builds the binaries and attaches them to the GitHub
+   Release for that tag. (The tag's version must match `pyproject.toml`, or the
+   workflow fails on purpose.)
+
+Released binaries appear under **Releases** on GitHub; CI build artifacts (for
+untagged commits) appear under each workflow run's **Artifacts**.
