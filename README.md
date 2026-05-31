@@ -6,6 +6,38 @@ It talks to the device through the official `meshtastic` Python library's
 structured config API (not screen-scraping the CLI), so it's reliable across
 firmware versions and works the same on Linux, macOS, and Windows.
 
+## Who this is for
+
+This tool is for the **EDC (Electric Daisy Carnival) family** Meshtastic crew —
+the folks coordinating on the Discord. It flashes the agreed-on radio settings
+and channels so everyone's nodes can talk to each other and to the on-site
+routers, with one command and no guesswork.
+
+👉 **Join the Discord:** https://discord.gg/electricdaisycarnival
+
+The `Fam` and `EDC-MeshOps` channels are encrypted. **You can request the PSK
+keys from the Discord server** (see [channel keys](#2-set-up-channel-keys-only-needed-for-fam)
+below) — they're shared there with family members, not published here.
+
+## What you get
+
+After running `meshprov`, your node is fully provisioned and ready to use on the
+EDC mesh:
+
+- **Correct radio settings** — US region, SHORT_TURBO preset, frequency slot 30
+  (~916.75 MHz), so your node is on the same frequency as everyone else's and the
+  on-site routers. A node on stock settings can't hear the mesh; this fixes that.
+- **Both family channels loaded** — `Fam` (everyday chat) and `EDC-MeshOps`
+  (ops/coordination), each with the shared encryption key, so your messages are
+  private to the family.
+- **Location off** — GPS and position broadcast are disabled, and position
+  precision is zeroed on both channels, so your node never leaks where you are.
+- **The right role** — `router` makes a node rebroadcast everything to extend
+  range; `fam` makes a normal handheld client (`--mute` for a second node you
+  carry close to your first).
+- **Verified** — every command reads the settings back after applying and tells
+  you `OK` / `FAIL` per item, so you know it actually took before you walk away.
+
 ---
 
 ## Quick start (recommended: pre-compiled binary)
@@ -36,8 +68,11 @@ mv meshprov-linux-x64 meshprov
 
 ### 2. Set up channel keys (only needed for `fam`)
 
-Channel encryption keys are never baked into the binary. Create a file named
-**`fam-keys.env`** next to the binary (or in the directory you run it from):
+Channel encryption keys are never baked into the binary or published in this
+repo. **Request the `Fam` and `EDC-MeshOps` PSK keys from the
+[EDC family Discord](https://discord.gg/electricdaisycarnival).** Then create a
+file named **`fam-keys.env`** next to the binary (or in the directory you run it
+from):
 
 ```sh
 # fam-keys.env
@@ -45,7 +80,8 @@ FAM_PSK_DEFAULT="<your-fam-key>"     # channel 0 "Fam" — same key on every fam
 OPS_PSK_DEFAULT="<your-ops-key>"     # channel 1 "EDC-MeshOps"
 ```
 
-Keys may be **base64** (`AQIDBAUGBwgJCgsMDQ4PEA==`) or **`0x`-hex**
+Paste the keys you got from Discord in place of the placeholders. They may be
+**base64** (`AQIDBAUGBwgJCgsMDQ4PEA==`) or **`0x`-hex**
 (`0x0102030405060708090a0b0c0d0e0f10`), and must decode to 16 or 32 bytes
 (AES-128/256). The `router` and `verify` commands don't need this file.
 
