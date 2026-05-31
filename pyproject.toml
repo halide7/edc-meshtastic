@@ -1,0 +1,16 @@
+[project]
+name = "meshprov"
+version = "0.1.0"
+description = "Provision Meshtastic nodes (EDC routers and fam client nodes) over USB serial."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "meshtastic>=2.7,<3",
+]
+
+[project.scripts]
+meshprov = "meshprov.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.11.17,<0.12.0"]
+build-backend = "uv_build"

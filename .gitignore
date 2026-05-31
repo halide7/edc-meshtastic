@@ -1,3 +1,11 @@
 # Local secrets and network-identifying data — never commit.
 fam-keys.env
 pre-reset-channels.txt
+
+# Python / uv
+.venv/
+__pycache__/
+*.pyc
+build/
+dist/
+*.egg-info/
