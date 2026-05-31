@@ -227,11 +227,11 @@ push.
 Two workflows live in `.github/workflows/`:
 
 - **`ci.yml`** — on every push/PR to `main`: runs the test suite on Linux,
-  macOS, and Windows, then builds + smoke-tests the binary on macOS and Windows
-  and uploads each as a downloadable workflow artifact.
+  macOS, and Windows, then builds + smoke-tests the binary on all three and
+  uploads each as a downloadable workflow artifact.
 - **`release.yml`** — on any `v*` tag: re-runs tests, verifies the tag matches
-  the `pyproject.toml` version, builds the macOS and Windows binaries, and
-  publishes them to a **GitHub Release** that anyone can download.
+  the `pyproject.toml` version, builds the Linux, macOS, and Windows binaries,
+  and publishes them to a **GitHub Release** that anyone can download.
 
 ### Cutting a release (SemVer)
 

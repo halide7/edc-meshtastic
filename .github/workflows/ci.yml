@@ -40,6 +40,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - os: ubuntu-latest
+            asset: meshprov-linux-x64
+            bin: dist/meshprov
           - os: macos-latest
             asset: meshprov-macos-arm64
             bin: dist/meshprov
